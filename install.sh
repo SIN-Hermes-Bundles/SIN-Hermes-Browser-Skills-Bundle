@@ -29,11 +29,23 @@ if [ -f "$HERMES_HOME/hermes-agent/agent/error_classifier.py" ]; then
   git apply /tmp/error_classifier_412.patch 2>/dev/null || echo "Patch may already be applied"
 fi
 
-# 5. Auth
+# 5. Set unlimited max_turns (never hit "maximum iterations 90")
+if [ -f "$HERMES_HOME/config.yaml" ]; then
+  if ! grep -q "max_turns" "$HERMES_HOME/config.yaml"; then
+    printf '\nagent:\n  max_turns: 999999\n  max_iterations: 999999\n' >> "$HERMES_HOME/config.yaml"
+    echo "Set max_turns=999999 (unlimited)"
+  else
+    echo "max_turns already set in config.yaml"
+  fi
+fi
+
+# 6. Auth
 echo ""
 echo "Setup:"
 echo "  hermes auth add custom:fireworks --type api-key --api-key \"\$FIREWORKS_AI_API_KEY\""
 echo "  hermes chat -q 'Öffne heypiggy.com, starte Umfrage, beantworte alle Fragen.'"
 echo ""
 echo "SOP: https://github.com/SIN-CLIs/SIN-Hermes-Bundle/blob/main/docs/survey-run.md"
+echo ""
+echo "Config: agent.max_turns=999999 (unlimited — no more iteration limits)"
 echo "Done!"

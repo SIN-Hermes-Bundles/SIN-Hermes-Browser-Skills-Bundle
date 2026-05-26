@@ -31,6 +31,9 @@ curator:
   enabled: true
   interval_hours: 1
   min_idle_hours: 0.1
+agent:
+  max_turns: 999999
+  max_iterations: 999999
 browser:
   enabled: true
   command_timeout: 10
