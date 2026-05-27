@@ -4,19 +4,19 @@
 
 Keine CLI-Tools. Keine Wrapper. Nur `browser_snapshot` + `browser_click` + `browser_cdp`.
 
-Für Provider-Konfig (Fireworks, 412-Fix) siehe [SIN-Hermes-Provider-Bundle](https://github.com/SIN-CLIs/SIN-Hermes-Provider-Bundle).
+Für Provider-Konfig (Fireworks, 412-Fix) siehe [SIN-Hermes-Provider-Bundle](https://github.com/SIN-Hermes-Bundles/SIN-Hermes-Provider-Bundle).
 
 ## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SIN-CLIs/SIN-Hermes-Browser-Skills-Bundle/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SIN-Hermes-Bundles/SIN-Hermes-Browser-Skills-Bundle/main/install.sh | bash
 ```
 
 ## Inhalt
 
 | Komponente | Zweck |
 |-----------|-------|
-| `skills/` | 22 Hermes Agent Skills |
+| `skills/` | 23 Hermes Agent Skills |
 | `docs/` | Survey-Run-Guide |
 
 ## Struktur
@@ -24,7 +24,17 @@ curl -fsSL https://raw.githubusercontent.com/SIN-CLIs/SIN-Hermes-Browser-Skills-
 ```
 ├── skills/
 │   ├── fireworks-vision-fix/           # Vision Base-URL Fix
+│   ├── heypiggy-kantar-form-submit/    # Kantar form.submit() Bypass
+│   ├── heypiggy-provider-install/      # Provider-Bundle Installer (neuer Mac)
+│   ├── heypiggy-purespectrum-captcha-extract/ # Base64-CAPTCHA Extraktion
+│   ├── heypiggy-survey-cpx-api/        # CPX API Bypass
+│   ├── heypiggy-survey-cpx-survalyzer-long/   # Lange CPX Surveys
+│   ├── heypiggy-survey-dynata-imperium-3d-bypass/ # 3D Shopping Bypass
 │   ├── heypiggy-survey-keyingress-cdp/ # keyingress.de Tab-Trick
+│   ├── heypiggy-survey-purespectrum-angular/ # Angular Custom Elements
+│   ├── heypiggy-survey-video-ad-spots/ # Video-Play + Skip
+│   ├── hermes-survey-bundles/          # Meta-Skill: alle Bundles
+│   ├── internal-captcha-discovery/    # CAPTCHA Pattern Discovery
 │   ├── post-survey/                    # Auto-Learning nach Umfrage
 │   ├── survey-auto-pattern-matcher/    # Zero-LLM Pattern-Matching
 │   ├── survey-batch-cdp-solver/        # 1 Call pro Seite
