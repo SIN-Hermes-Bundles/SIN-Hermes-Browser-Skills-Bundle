@@ -52,6 +52,34 @@ Dashboard-Tab ist KORRUPT wenn:
 
 Loesung: browser_navigate zum Dashboard — NICHT Target.activateTarget!
 
+## Nach Chrome-Restart
+
+Nach `pkill -f heypiggy-chrome-profile-9999` und Neustart:
+```
+1. Chrome startet mit neuer Browser-ID
+2. browser_navigate schlaegt fehl: "CDP WebSocket connect failed: 404"
+3. browser_cdp funktioniert aber (verbindet frisch)
+4. cd ~/.hermes/config.yaml → browser.cdp_url updaten:
+   curl -s http://localhost:9999/json/version | grep webSocketDebuggerUrl
+5. Dann browser_navigate funktioniert wieder
+```
+
+## Popup-Blocker
+
+Chrome blockiert programmatische window.open() Aufrufe:
+- ❌ el.click() auf "Umfrage starten" → kein neuer Tab
+- ❌ openSurvey() direkt → kein neuer Tab  
+- ✅ browser_click() → echter Klick, oeffnet Tab
+- ✅ Input.dispatchMouseEvent → echter Klick, oeffnet Tab (mit target_id!)
+
+## Post-Login Wizard
+
+Nach frischem Login Chrome-Profil:
+- Heypiggy zeigt Profile-Setup-Wizard
+- Buttons: "Mein Name ist richtig", "Starte die erste Umfrage!", "Gehe zu Einstellungen"
+- Alle "Schließen"-Buttons klicken um zum Dashboard zu kommen
+- Erst dann Umfragen anklickbar
+
 ## Tab-Cleanup
 
 NIEMALS Tabs schliessen! (Laut AGENTS.md §0a)
