@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/SIN-Hermes-Bundles/SIN-Hermes-Brows
 
 | Komponente | Zweck |
 |-----------|-------|
-| `skills/` | 23 Hermes Agent Skills |
+| `skills/` | 22 Hermes Agent Skills |
 | `docs/` | Survey-Run-Guide |
 
 ## Struktur
@@ -25,7 +25,6 @@ curl -fsSL https://raw.githubusercontent.com/SIN-Hermes-Bundles/SIN-Hermes-Brows
 ├── skills/
 │   ├── fireworks-vision-fix/           # Vision Base-URL Fix
 │   ├── heypiggy-kantar-form-submit/    # Kantar form.submit() Bypass
-│   ├── heypiggy-provider-install/      # Provider-Bundle Installer (neuer Mac)
 │   ├── heypiggy-purespectrum-captcha-extract/ # Base64-CAPTCHA Extraktion
 │   ├── heypiggy-survey-cpx-api/        # CPX API Bypass
 │   ├── heypiggy-survey-cpx-survalyzer-long/   # Lange CPX Surveys
