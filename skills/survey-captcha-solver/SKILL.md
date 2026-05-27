@@ -1,70 +1,127 @@
 ---
 name: survey-captcha-solver
-description: Universal CAPTCHA solving for Heypiggy surveys using solve_captcha.py instead of slow browser_vision
-title: Survey CAPTCHA Solver
-version: 1.0
+description: CAPTCHA solving for surveys — Tesseract OCR primary, Fireworks Vision fixed (sinatorpool2), reCAPTCHA = hard stop
+title: Survey CAPTCHA Solver (OCR + Vision)
+version: 3.0
 ---
 
 ## Trigger
-- CAPTCHA erscheint auf Survey-Seite (Text-CAPTCHA, Slider, Drag-Drop)
-- browser_vision ist langsam (60-120s) und unzuverlässig
-- CAPTCHA blockiert Survey-Fortschritt
+- CAPTCHA erscheint auf Survey-Seite (Text-CAPTCHA, Bild-Code, Slider, Drag-Drop)
+- Provider blockiert mit "Bitte geben Sie den Code ein"
+- Drag-and-Drop Attention Check (siehe survey-drag-captcha-solver)
 
-## Regel
-**Für CAPTCHA: Immer solve_captcha.py nutzen. Nie browser_vision für CAPTCHA-Lesung.**
+## Solver Priority (sortiert nach Speed)
+1. **Tesseract OCR** (~1.2s) — klare Text-CAPTCHA, lokal, kostenlos
+2. **browser_vision** (~8s) — verzerrte CAPTCHA, Fallback wenn OCR unsicher
+3. **CDP Input.dispatchMouseEvent** — Slider/Drag-Drop (siehe survey-drag-captcha-solver)
+4. **reCAPTCHA** — HARD STOP, sofort naechste Umfrage
 
-## Warum solve_captcha.py statt browser_vision?
-
-| Methode | Dauer | Erfolgsrate | Problem |
-|---------|-------|-------------|---------|
-| browser_vision | 60-120s | Niedrig | Langsam, 502-fällig, teuer |
-| solve_captcha.py | 2-5s | Hoch | Lokal, schnell, deterministisch |
-
-## Verwendung
+## Primary: Tesseract OCR (~1.2s)
 
 ```bash
-# Automatisch erkennen und lösen
-python3 ~/stealth-runner/survey-cli/survey/skills/solve_captcha.py auto
-
-# Oder direkt per Typ:
-python3 ~/stealth-runner/survey-cli/survey/skills/solve_captcha.py vision
-python3 ~/stealth-runner/survey-cli/survey/skills/solve_captcha.py slider
-python3 ~/stealth-runner/survey-cli/survey/skills/solve_captcha.py drag
+# Installation
+brew install tesseract
 ```
 
-## Ablauf nach CAPTCHA-Lösung
-
-1. solve_captcha.py gibt JSON zurück: {"captcha": "YACEef", "ok": true}
-2. Antwort in Input-Feld tippen: browser_type mit Wert
-3. Weiter klicken: browser_click auf Nächste/Weiter
-4. Snapshot: browser_snapshot prüfen ob weitergegangen
-
-## Beispiel-Flow
-
+Im Browser: Screenshot via CDP Page.captureScreenshot, dann:
+```bash
+echo "<base64>" | python3 ~/.hermes/skills/survey/survey-hybrid-captcha-solver/scripts/solver.py
 ```
-browser_snapshot → CAPTCHA erkannt
-→ solve_captcha.py auto (2s)
-→ browser_type "captcha_text" (0.3s)
-→ browser_click "Nächste" (0.3s)
-→ browser_snapshot prüfen (0.3s)
-= 3s total statt 90s mit browser_vision
+Output: `{"ok": true, "captcha": "A7X9", "method": "tesseract", "confidence": 0.85}`
+
+## Secondary: browser_vision (~8s, Fallback)
+
+### CRITICAL: CAPTCHA-Bild ISOLIEREN vor Vision-Send!
+**NIE den gesamten Screenshot an Vision senden.** UI-Elemente (Refresh-Button, Icons) werden sonst als CAPTCHA-Zeichen interpretiert ("9" statt refresh-icon).
+
+Vorgehen:
+```javascript
+// CDP: Nur das CAPTCHA-img extrahieren, nicht die ganze Seite
+const img = document.querySelector('img[src*="captcha"], img.captcha-image, img[alt*="CAPTCHA"]');
+const canvas = document.createElement('canvas');
+canvas.width = img.width;
+canvas.height = img.height;
+canvas.getContext('2d').drawImage(img, 0, 0);
+const croppedB64 = canvas.toDataURL('image/png');
+// → Diesen Base64 an vision_analyze senden
 ```
+
+### Fireworks Vision: JETZT FUNKTIONIERT (FIXED 2026-05-27)
+- Base URL: `https://sinatorpool2.delqhi.com/inference/v1` (NICHT sinator.delqhi.com!)
+- Modell: `accounts/fireworks/routers/kimi-k2p6-turbo`
+- `browser_vision` + `vision_analyze` liefern HTTP 200
+- **ABER:** ~8s Latenz (Proxy → LLM → Antwort). Tesseract bevorzugen wenn moeglich.
+
+### Hermes Config (aktuell, funktioniert)
+```yaml
+# ~/.hermes/config.yaml
+model:
+  default: accounts/fireworks/routers/kimi-k2p6-turbo
+  provider: custom:fireworks
+  supports_vision: true
+auxiliary:
+  vision:
+    provider: custom:fireworks
+    model: accounts/fireworks/routers/kimi-k2p6-turbo
+    base_url: 'https://sinatorpool2.delqhi.com/inference/v1'
+
+# ~/.hermes/providers/fireworks-ai.yaml
+base_url: https://sinatorpool2.delqhi.com/inference/v1
+```
+
+## CAPTCHA-Typen — Lösungs-Strategie
+
+### 1. Text-CAPTCHA (Bild mit Buchstaben/Zahlen)
+
+**ACHTUNG - ULTRA-VERBOT:** "ROBOT" ist ein ANTI-BOT Attention-Check auf SEITE 1, NIEMALS als Text-CAPTCHA-Lösung verwenden!
+
+1. Tesseract OCR zuerst (1.2s) — Bild ISOLIEREN (nur CAPTCHA, nicht ganzer Screenshot)
+2. Wenn Confidence < 50% → CAPTCHA-Bild isolieren → browser_vision mit cropped image (8s)
+3. NUR den gelesenen Code eingeben — NIEMALS raten oder Default-Werte verwenden
+4. Wenn OCR/ Vision nicht verfügbar → Umfrage abbrechen (nicht raten!)
+5. Weiter klicken
+
+Raten bei Text-CAPTCHA = Disqualifizierung + Account-Ban-Risiko.
+
+### 2. Slider-CAPTCHA ("Ziehen Sie den Slider")
+CDP Input.dispatchMouseEvent mit target_id (siehe survey-drag-captcha-solver)
+
+### 3. Drag-Drop (Angular CDK)
+Siehe survey-drag-captcha-solver Skill
+
+### 4. reCAPTCHA v2 = HARD STOP
+Google reCAPTCHA v2 ("Ich bin kein Roboter") ist programmatisch unloesbar.
+```javascript
+const recaptcha = document.querySelector('iframe[src*="google.com/recaptcha"]');
+if(recaptcha) return 'HARD STOP - reCAPTCHA v2';
+```
+**Action:** Sofort naechste Umfrage. NIE reCAPTCHA-Klicks probieren.
+
+## Speed-Regeln (NICHT VERHANDELBAR)
+- ❌ NIEMALS `sleep` / `timeout` zwischen Aktionen
+- ❌ NIEMALS idempotente Wiederholungen (gleicher Snapshot 2x)
+- ❌ KEINE Diagnose-Calls wenn der erste Fehlschlag klar ist
+- ✅ Klick → Snapshot → Entscheidung → Naechster Klick
 
 ## Verboten
-- ❌ browser_vision für CAPTCHA-Lesung (zu langsam)
-- ❌ browser_cdp Input.dispatchMouseEvent für Drag (fehleranfällig)
-- ❌ Manueller JS-Drag in browser_console (komplex, bricht oft)
+- ❌ Vollbild-Screenshot an Vision senden (CAPTCHA-Crop zuerst!)
+- ❌ reCAPTCHA v2 Klicks probieren
+- ❌ Endlose CAPTCHA-Retries (max 2 Versuche)
+- ❌ Fireworks `sinator.delqhi.com` (falsche Base URL, 404)
 
-## Erforderlich
-- cd ~/stealth-runner/survey-cli vor Ausführung
-- Chrome auf Port 9999 läuft
-- FIREWORKS_AI_API_KEY gesetzt
+## Pitfalls
 
-## Was funktioniert
-- Text-CAPTCHA: solve_captcha.py vision (screenshot + OCR)
-- Slider: solve_captcha.py slider (JS-Drag)
-- Drag-Drop: solve_captcha.py drag (CDK-Drag)
+### 1. Vision verwechselt UI-Elemente mit CAPTCHA-Zeichen
+Refresh-Button wurde als "9" interpretiert → CAPTCHA-Code falsch.
+**Fix:** IMMER CAPTCHA-Bild isolieren (canvas.drawImage), nie Screenshot senden.
 
-## Was NICHT funktioniert
-- reCAPTCHA iframe (unsichtbar für CDP-JS)
-- Audio-CAPTCHA (nicht implementiert)
+### 2. Tesseract braucht klare Bilder
+Verzerrte CAPTCHA → niedrige Confidence → Fallback zu browser_vision.
+
+### 3. CAPTCHA-Code ist case-sensitive
+OCR liefert mixed case → `.toUpperCase()` vor Eingabe.
+
+## Support Files
+- `references/fireworks-vision-fix.md` — Wie Fireworks Vision gefixt wurde (sinatorpool2)
+- `references/vision-crop-technique.md` — CAPTCHA-Bild isolieren vor Vision-Send
+- `templates/ocr-solve.py` — Python-Skript Base64 → Tesseract → Text
