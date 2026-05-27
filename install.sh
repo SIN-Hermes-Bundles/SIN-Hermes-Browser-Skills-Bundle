@@ -6,7 +6,7 @@ HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 echo "Installing SIN-Hermes-Browser-Skills-Bundle..."
 
 # Skills only
-for skill in fireworks-vision-fix heypiggy-survey-keyingress-cdp post-survey survey-auto-pattern-matcher survey-batch-cdp-solver survey-captcha-robot-death survey-captcha-solver survey-cdp-workaround survey-drag-captcha-solver survey-hybrid-captcha-solver survey-master-solver survey-tab-switch survey-weiter-button; do
+for skill in fireworks-vision-fix heypiggy-kantar-form-submit heypiggy-purespectrum-captcha-extract heypiggy-survey-cpx-api heypiggy-survey-cpx-survalyzer-long heypiggy-survey-dynata-imperium-3d-bypass heypiggy-survey-keyingress-cdp heypiggy-survey-purespectrum-angular heypiggy-survey-video-ad-spots hermes-survey-bundles internal-captcha-discovery post-survey survey-auto-pattern-matcher survey-batch-cdp-solver survey-captcha-robot-death survey-captcha-solver survey-cdp-workaround survey-drag-captcha-solver survey-hybrid-captcha-solver survey-master-solver survey-tab-switch survey-weiter-button; do
   mkdir -p "$HERMES_HOME/skills/survey/$skill"
   curl -fsSL "$REPO/skills/$skill/SKILL.md" -o "$HERMES_HOME/skills/survey/$skill/SKILL.md" 2>/dev/null || true
 done

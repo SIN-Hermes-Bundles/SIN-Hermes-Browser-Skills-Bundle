@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/SIN-CLIs/SIN-Hermes-Browser-Skills-
 
 | Komponente | Zweck |
 |-----------|-------|
-| `skills/` | 13 Hermes Agent Skills |
+| `skills/` | 22 Hermes Agent Skills |
 | `docs/` | Survey-Run-Guide |
 
 ## Struktur
